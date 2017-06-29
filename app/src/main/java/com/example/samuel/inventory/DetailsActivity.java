@@ -85,6 +85,10 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
                           onSale();
                        }
                    });
+                // i have tried using (view.getID == R.id.sale){
+                // onSale
+                // }
+//                  still doesnt work
 
                 startActivity(intent);
 
@@ -183,6 +187,7 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
 
             Toast.makeText(DetailsActivity.this, "No more units available, please order for more...", Toast.LENGTH_LONG).show();
         }
+        saleInfo.close();
 
 
         getLoaderManager().restartLoader(PRODUCT_LOADER, null, this);
