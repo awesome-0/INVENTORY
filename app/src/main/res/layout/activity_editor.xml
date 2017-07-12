@@ -6,33 +6,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="5dp"
     tools:context="com.example.samuel.inventory.EditorActivity">
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
     <ImageView
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="340dp"
         android:id="@+id/image"
-        android:scaleType="centerCrop"/>
+        android:background="#E0E0E0"
+        android:scaleType="centerCrop"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/disappearing_text"
             android:layout_centerInParent="true"
-            android:text="CLICK HERE TO ADD A PHOTO OF YOUR PRODUCT"
+            android:text="ADD A PHOTO"
             android:textSize="30sp"
-            android:padding="16dp"/>
+            android:padding="16dp"
+            android:layout_marginBottom="15dp"/>
     </RelativeLayout>
-    
+
     <!-- Overview category -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="5dp">
+        android:layout_marginTop="0dp">
 
         <!-- Label -->
         <TextView
@@ -69,7 +75,7 @@
         <TextView
             android:text="Price"
             style="@style/CategoryStyle" />
-       
+
 
             <RelativeLayout
                 android:layout_height="wrap_content"
@@ -81,7 +87,7 @@
                 <EditText
                     android:id="@+id/edit_price"
                     android:hint="Enter Price here"
-                    android:inputType="number"
+                    android:inputType="numberDecimal"
                     style="@style/EditorFieldStyle" />
 
                 <!-- Units for weight (kg) -->
@@ -120,7 +126,8 @@
 
 
         </LinearLayout>
-       
+
     </LinearLayout>
+
 
     </LinearLayout>

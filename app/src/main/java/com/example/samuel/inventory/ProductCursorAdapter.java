@@ -3,10 +3,12 @@ package com.example.samuel.inventory;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
@@ -21,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.samuel.inventory.data.ProductContract;
+import com.example.samuel.inventory.data.ProductDbHelper;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -34,51 +37,122 @@ import com.example.samuel.inventory.DetailsActivity;
  */
 
 public class ProductCursorAdapter extends CursorAdapter  {
-    private ImageView image;
-    private TextView product;
-    private TextView price;
-    private TextView quantity;
-    LayoutInflater mInflater;
+    private Toast mToast;
+
 
 
     public ProductCursorAdapter(Context context, Cursor c) {
         super(context, c, 0);
-        mInflater = LayoutInflater.from(context);
+
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        return LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
+         View view = LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
+        MyviewHolder holder = new MyviewHolder(view);
+        view.setTag(holder);
+        return  view;
+    }
+    class MyviewHolder{
+
+         ImageView image;
+         TextView product;
+         TextView price;
+         TextView quantity;
+        Button saleButton;
+        TextView missing_text;
+
+        public MyviewHolder(View view) {
+            image = (ImageView) view.findViewById(R.id.detail_image);
+            product = (TextView) view.findViewById(R.id.detail_product);
+            price = (TextView) view.findViewById(R.id.detail_price);
+            quantity = (TextView) view.findViewById(R.id.detail_quantity);
+            saleButton = (Button) view.findViewById(R.id.salebutton);
+            missing_text = (TextView) view.findViewById(R.id.missing_image);
+        }
     }
 
 
     @Override
-    public void bindView(View view, final Context context,  Cursor cursor) {
-
-
-
-
+    public void bindView(View view, final Context context, final Cursor cursor) {
+        final MyviewHolder holder = (MyviewHolder) view.getTag();
         String Product = cursor.getString(cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT));
         String Price = String.valueOf(cursor.getInt(cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRICE)));
         String Quantity = String.valueOf(cursor.getInt(cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY)));
-        Uri imageUri = Uri.parse(cursor.getString(cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_IMAGE)));
         String file_path = cursor.getString(cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_IMAGE));
-        int i = Integer.parseInt(Quantity);
         Price += "$";
         Quantity += " UNITS";
-        image = (ImageView) view.findViewById(R.id.detail_image);
-        product = (TextView) view.findViewById(R.id.detail_product);
-        price = (TextView) view.findViewById(R.id.detail_price);
-        quantity = (TextView) view.findViewById(R.id.detail_quantity);
-        Log.v("image file path ", "image file path is" + file_path);
-        File myfile = new File(file_path);
-        image.setTag(file_path);
-        Picasso.with(context).load(myfile).into(image);
-        product.setText(Product);
-        price.setText(Price);
-        quantity.setText(Quantity);
 
+
+
+        File myfile = new File(file_path);
+        Uri imageUri = Uri.fromFile(myfile);
+        if(myfile.exists()){
+            holder.missing_text.setVisibility(View.GONE);
+
+            holder.image.setTag(imageUri);
+            Picasso.with(context).load(imageUri).fit().centerCrop().into(holder.image);
+
+        }
+        else{
+            holder.missing_text.setVisibility(View.VISIBLE);
+            holder.image.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            holder.image.setPadding(2,2,2,2);
+
+        }
+
+        holder.product.setText(Product);
+        holder.price.setText(Price);
+        holder.quantity.setText(Quantity);
+        holder.saleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ProductDbHelper myDbHelper = new ProductDbHelper(v.getContext());
+                SQLiteDatabase db = myDbHelper.getWritableDatabase();
+                String parts[] = holder.quantity.getText().toString().split(" ");
+                int availableQuantity = Integer.parseInt(parts[0]);
+                if(mToast != null){
+                    mToast.cancel();
+                }
+                if(availableQuantity == 0){
+                   mToast = Toast.makeText(v.getContext(), "No more units available, please order for more...", Toast.LENGTH_LONG);
+                    mToast.show();
+               return;
+                }
+                else if (availableQuantity == 2){
+                   mToast = Toast.makeText(v.getContext(), "Sold!..." + (availableQuantity - 1) + " unit remaining", Toast.LENGTH_LONG);
+                    mToast.show();
+                }
+                else if (availableQuantity == 1){
+                    mToast = Toast.makeText(v.getContext(), "Sold!... last unit remaining", Toast.LENGTH_LONG);
+                    mToast.show();
+                }
+                    else{
+                  mToast = Toast.makeText(v.getContext(), "Sold!...", Toast.LENGTH_LONG);
+                    mToast.show();
+
+                }
+                    availableQuantity -= 1;
+                if(availableQuantity == 1){
+                    holder.quantity.setText(String.valueOf(availableQuantity) + " UNIT");
+                }
+                else {
+                    holder.quantity.setText(String.valueOf(availableQuantity) + " UNITS");
+                }
+                long id = cursor.getLong(cursor.getColumnIndex(ProductContract.ProductEntry._ID));
+
+                ContentValues values = new ContentValues();
+                values.put(ProductContract.ProductEntry.COLUMN_QUANTITY, availableQuantity);
+
+                db.update(ProductContract.ProductEntry.TABLE_NAME,values,"_id=?",new String[]{String.valueOf(id)});
+                db.close();
+
+
+            }
+        });
              }
+
+
 
 
 

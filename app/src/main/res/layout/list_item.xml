@@ -7,16 +7,29 @@
     android:orientation="horizontal"
     android:padding="10dp"
 
+
    >
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
     <ImageView
 
         android:id="@+id/detail_image"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:scaleType="centerCrop"
-        android:src="@mipmap/ic_launcher_round"
-
+        android:padding="2dp"
         />
+        <TextView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:id="@+id/missing_image"
+            android:text="@string/image_missing"
+            android:textSize="20sp"
+            android:padding="10dp"
+            android:gravity="center"/>
+
+    </RelativeLayout>
 
 
     <LinearLayout
@@ -62,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="3"
                 android:gravity="center"
-                android:text="sell"
+                android:text="@string/sell"
                 android:textSize="10sp"
                 android:focusable="false"
                 />
@@ -74,7 +87,7 @@
             android:layout_height="0dp"
             android:layout_gravity="center_horizontal"
             android:layout_weight="1"
-            android:padding="5dp"
+            android:padding="2dp"
             android:text="why"
             android:textSize="20sp"
             android:textStyle="bold"

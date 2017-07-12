@@ -13,6 +13,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +26,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,14 +43,24 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
     private FloatingActionButton fab;
     private ProductCursorAdapter mAdapter;
     private static final int PRODUCT_LOADER = 0;
-    private static final int PRODUCT_RELOADER = 2;
     public static Uri currentProductUri;
     private ListView list;
+    LinearLayout noproductView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
+        noproductView = (LinearLayout) findViewById(R.id.noProductView);
+        String[] project = {ProductEntry.COLUMN_PRODUCT, ProductEntry.COLUMN_PRICE, ProductEntry.COLUMN_IMAGE, ProductEntry.COLUMN_QUANTITY};
+
+        Cursor mCursor = getContentResolver().query(ProductEntry.CONTENT_URI,project,null,null,null);
+        if(mCursor.getCount() == 0){
+            noproductView.setVisibility(View.VISIBLE);
+        }else{
+            noproductView.setVisibility(View.GONE);
+        }
+
         mDbHelper = new ProductDbHelper(this);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -60,11 +74,7 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
 
          list = (ListView) findViewById(R.id.list);
         list.setItemsCanFocus(true);
-
-
         list.setAdapter(mAdapter);
-
-
         getLoaderManager().initLoader(PRODUCT_LOADER, null, this);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -72,32 +82,11 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
                 final Intent intent = new Intent(DetailsActivity.this, EditorActivity.class);
-
-
                 intent.setData(currentProductUri);
-
-                  ViewGroup viewg = (ViewGroup) view;
-                  Button saleButton = (Button) viewg.findViewById(R.id.salebutton);
-
-                   saleButton.setOnClickListener(new View.OnClickListener() {
-                       @Override
-                       public void onClick(View v) {
-                          onSale();
-                       }
-                   });
-                // i have tried using (view.getID == R.id.sale){
-                // onSale
-                // }
-//                  still doesnt work
-
                 startActivity(intent);
-
             }
                      });
-
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -106,12 +95,24 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        String[] project = {ProductEntry.COLUMN_PRODUCT, ProductEntry.COLUMN_PRICE, ProductEntry.COLUMN_IMAGE, ProductEntry.COLUMN_QUANTITY};
+        Cursor mCursor = getContentResolver().query(ProductEntry.CONTENT_URI,project,null,null,null);
+        if(mCursor.getCount() == 0){
+            noproductView.setVisibility(View.VISIBLE);
+        }else{
+            noproductView.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.delete_all_products:
                 deletionDialog();
+               break;
 
-                break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -137,18 +138,18 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
     private void deletionDialog() {
 
         final AlertDialog.Builder deleteDialog = new AlertDialog.Builder(this);
-        deleteDialog.setTitle("Are you sure you want to delete?");
-        deleteDialog.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+        deleteDialog.setTitle(R.string.sure_to_delete);
+        deleteDialog.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (dialog != null) {
                     deleteProduct();
-                    finish();
+
                 }
 
             }
         });
-        deleteDialog.setNegativeButton("DISMISS", new DialogInterface.OnClickListener() {
+        deleteDialog.setNegativeButton(R.string.dismiss, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (dialog != null) {
@@ -165,32 +166,11 @@ public class DetailsActivity extends AppCompatActivity implements LoaderManager.
     private void deleteProduct() {
         int delete = getContentResolver().delete(ProductEntry.CONTENT_URI, null, null);
         if (delete < 1) {
-            Toast.makeText(this, "Deletion Unsuccessful", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.delete_failed, Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(this, "Deletion Successful", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.delete_successful, Toast.LENGTH_LONG).show();
         }
     }
 
-    public void onSale() {
 
-
-        String[] Project = {ProductEntry.COLUMN_QUANTITY};
-        Cursor saleInfo = getContentResolver().query(currentProductUri, Project, null, null, null);
-        saleInfo.moveToFirst();
-        int availableQuantity = saleInfo.getInt(saleInfo.getColumnIndex(ProductEntry.COLUMN_QUANTITY));
-        if (availableQuantity >= 1) {
-            Toast.makeText(DetailsActivity.this, "Sold!..." + (availableQuantity - 1) + " units remaining", Toast.LENGTH_LONG).show();
-            ContentValues values = new ContentValues();
-            values.put(ProductEntry.COLUMN_QUANTITY, (availableQuantity - 1));
-            int update = getContentResolver().update(currentProductUri, values, null, null);
-        } else {
-
-            Toast.makeText(DetailsActivity.this, "No more units available, please order for more...", Toast.LENGTH_LONG).show();
-        }
-        saleInfo.close();
-
-
-        getLoaderManager().restartLoader(PRODUCT_LOADER, null, this);
-
-    }
 }

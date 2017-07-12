@@ -24,6 +24,7 @@
     <color name="editorColorPrimary">#2D3640</color>
 
     <color name="Fab_Black">#000001</color>
+    <color name="white">#FFFFFF</color>
 
     <!-- Primary dark color for the editor -->
     <color name="editorColorPrimaryDark">#394450</color>
